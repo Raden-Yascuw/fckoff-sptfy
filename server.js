@@ -4,14 +4,14 @@ const yts = require('yt-search');
 require('dotenv').config();
 
 const app = express();
-// Menggunakan port 3005 dari kemarin yang sudah aktif terkendali
-const PORT = process.env.PORT || 3005; 
 
-app.use(express.static(__dirname));
+// Menggunakan folder 'public' untuk file statis agar dibaca sempurna oleh Vercel
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
+// Rute utama untuk menampilkan index.html dari folder public
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // ENDPOINT UTAMA: Mencari daftar lagu berdasarkan nama penyanyi
@@ -39,9 +39,14 @@ app.post('/api/cari-artis', async (req, res) => {
     }
 });
 
-const PORT = process.env.PORT || 3005;
+// Penyelamat Eror Vercel: Hanya menjalankan app.listen jika dijalankan di komputer lokal (buka Vercel)
+if (process.env.NODE_ENV !== 'production') {
+    const PORT = process.env.PORT || 3005;
+    app.listen(PORT, '0.0.0.0', () => {
+        console.log(`\n🚀 Fckoff Spotfy Player Aktif Terkendali di Lokal!`);
+        console.log(`Server berjalan secara publik pada port: ${PORT}\n`);
+    });
+}
 
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`\n🚀 Fckoff Spotfy Player Aktif Terkendali!`);
-    console.log(`Server berjalan secara publik pada port: ${PORT}\n`);
-});
+// WAJIB: Mengekspor app Express agar bisa dibaca sebagai Serverless Function oleh Vercel
+module.exports = app;
