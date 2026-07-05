@@ -28,12 +28,14 @@
             text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
         }
 
+        /* 💻 Tata letak utama (Desktop): Sejajar horizontal ke samping */
         .app-container {
             display: flex;
+            flex-direction: row;
             gap: 25px;
             width: 100%;
             max-width: 1200px;
-            height: 75vh;
+            height: 75vh; /* Membatasi tinggi di desktop agar ada scrollbar internal */
         }
 
         /* 🔮 Liquid Glassmorphism Panel */
@@ -49,6 +51,7 @@
             flex-direction: column;
             box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
             overflow: hidden;
+            box-sizing: border-box;
         }
 
         /* Mempersempit panel playlist manager agar layout tetap seimbang */
@@ -99,6 +102,7 @@
             color: white;
             border: 1px solid rgba(255, 255, 255, 0.15);
             margin-bottom: 15px;
+            width: 100%;
         }
         .btn-secondary:hover {
             background: rgba(255, 255, 255, 0.2);
@@ -120,15 +124,17 @@
             background: rgba(255, 255, 255, 0.02);
             border: 1px solid rgba(255, 255, 255, 0.03);
             border-radius: 16px;
+            gap: 10px;
         }
         .item-lagu:hover { 
             background: rgba(255, 255, 255, 0.07);
         }
         
-        .info-meta { display: flex; align-items: center; gap: 14px; }
-        .info-meta img { width: 48px; height: 48px; border-radius: 12px; object-fit: cover; }
-        .judul-txt { font-weight: 600; font-size: 15px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .artis-txt { font-size: 12px; color: rgba(255, 255, 255, 0.6); }
+        .info-meta { display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0; }
+        .info-meta img { width: 48px; height: 48px; border-radius: 12px; object-fit: cover; flex-shrink: 0; }
+        .judul-wrapper { min-width: 0; flex: 1; }
+        .judul-txt { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .artis-txt { font-size: 12px; color: rgba(255, 255, 255, 0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
         .btn-add {
             background: rgba(255, 255, 255, 0.1); 
@@ -139,6 +145,7 @@
             cursor: pointer; 
             font-size: 12px; 
             font-weight: 600;
+            flex-shrink: 0;
         }
         .btn-add:hover { background: #ffffff; color: #000000; }
         .btn-delete { background: rgba(235, 94, 85, 0.2); color: #eb5e55; border: 1px solid rgba(235, 94, 85, 0.3); }
@@ -158,11 +165,17 @@
             flex-direction: column;
             align-items: center;
             gap: 12px;
+            flex-shrink: 0;
         }
         .status-info { 
             font-size: 14px; 
             color: rgba(255, 255, 255, 0.7); 
             font-weight: 500;
+            text-align: center;
+            max-width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .controls { display: flex; justify-content: center; align-items: center; gap: 20px; }
         
@@ -178,6 +191,34 @@
         .btn-control.playing { background: #ffffff; color: #000000; width: 54px; height: 54px; font-size: 20px; }
         
         #youtube-player { display: none; }
+
+        /* 📱📱📱 SCRIPT SAKTI RESPONSIVE HP (MAX-WIDTH: 768px) 📱📱📱 */
+        @media (max-width: 768px) {
+            body {
+                padding: 15px 10px;
+            }
+
+            h1 {
+                font-size: 28px;
+                margin-bottom: 20px;
+            }
+
+            /* Ubah layout utama jadi berbaris vertikal ke bawah */
+            .app-container {
+                flex-direction: column;
+                height: auto; /* Lepas pembatasan tinggi kaku desktop */
+                gap: 20px;
+            }
+
+            /* Paksa semua kotak berukuran penuh memenuhi layar HP */
+            .panel, .panel.manager {
+                flex: none;
+                width: 100%;
+                height: 500px; /* Beri tinggi ideal per kotak di HP agar mantap di-scroll */
+                border-radius: 20px;
+                padding: 18px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -211,8 +252,7 @@
 
         <div class="panel manager">
             <h2>My Saved Playlists</h2>
-            <div class="list-container" id="koleksi-playlist-saved">
-                </div>
+            <div class="list-container" id="koleksi-playlist-saved"></div>
         </div>
     </div>
 
@@ -225,15 +265,12 @@
         let indexAktif = -1;
         let sedangPutar = false;
 
-        // Inisialisasi awal saat halaman dibuka
         window.onload = function() {
-            // 1. Muat kembali antrean terakhir agar tidak hilang saat di-refresh
             const antreanLama = localStorage.getItem('fckoff_current_queue');
             if(antreanLama) {
                 playlistMandiri = JSON.parse(antreanLama);
                 perbaruiTampilanPlaylist();
             }
-            // 2. Muat daftar playlist yang pernah di-save sebelumnya
             muatKoleksiPlaylistLokal();
         }
 
@@ -263,7 +300,7 @@
                     <div class="item-lagu">
                         <div class="info-meta">
                             <img src="${lagu.gambar}">
-                            <div>
+                            <div class="judul-wrapper">
                                 <div class="judul-txt">${lagu.judul}</div>
                                 <div class="artis-txt">${lagu.artis} • ${lagu.durasi}</div>
                             </div>
@@ -290,8 +327,8 @@
                 const isActive = index === indexAktif ? 'active' : '';
                 wadah.innerHTML += `
                     <div class="item-lagu ${isActive}">
-                        <div style="display:flex; align-items:center; gap:10px; flex:1;" onclick="putarLaguDiIndeks(${index})">
-                            <div class="judul-txt">${index + 1}. ${lagu.judul}</div>
+                        <div style="display:flex; align-items:center; gap:10px; flex:1; min-width:0;" onclick="putarLaguDiIndeks(${index})">
+                            <div class="judul-txt" style="flex:1;">${index + 1}. ${lagu.judul}</div>
                         </div>
                         <button class="btn-add btn-delete" onclick="hapusDariAntrean(event, ${index})">X</button>
                     </div>
@@ -300,7 +337,7 @@
         }
 
         function hapusDariAntrean(event, index) {
-            event.stopPropagation(); // Mencegah lagu terputar tidak sengaja saat tombol X ditekan
+            event.stopPropagation();
             playlistMandiri.splice(index, 1);
             simpanAntreanKeLocalStorage();
             if(index === indexAktif) {
@@ -360,7 +397,6 @@
             }
         }
 
-        /* 💾 KELOMPOK FITUR SAVE PLAYLIST (SPOTIFY STYLE) */
         function simpanKeKoleksi() {
             if(playlistMandiri.length === 0) {
                 alert("Your current Liquid Playlist is empty! Search and add some tracks first.");
@@ -393,8 +429,8 @@
                 const totalTracks = koleksi[namaKey].length;
                 wadahKoleksi.innerHTML += `
                     <div class="item-lagu">
-                        <div style="flex:1; cursor:pointer;" onclick="loadPlaylistMasukAntrean('${namaKey}')">
-                            <div style="font-weight:600;">📁 ${namaKey}</div>
+                        <div style="flex:1; cursor:pointer; min-width:0;" onclick="loadPlaylistMasukAntrean('${namaKey}')">
+                            <div style="font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">📁 ${namaKey}</div>
                             <div style="font-size:11px; color:rgba(255,255,255,0.5);">${totalTracks} tracks saved</div>
                         </div>
                         <button class="btn-add btn-delete" style="padding: 6px 12px;" onclick="hapusPlaylistPermanen('${namaKey}')">Del</button>
