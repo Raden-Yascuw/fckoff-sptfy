@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>fckoff spotfy</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #0b2b16 0%, #121212 50%, #3a070e 100%);
+            background-attachment: fixed;
+            color: #ffffff;
+            font-family: '-apple-system', BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            color: rgba(255, 255, 255, 0.95);
+            font-size: 36px;
+            font-weight: 800;
+            letter-spacing: -1.5px;
+            margin-bottom: 30px;
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        .app-container {
+            display: flex;
+            gap: 25px;
+            width: 100%;
+            max-width: 1200px;
+            height: 75vh;
+        }
+
+        /* 🔮 Liquid Glassmorphism Panel */
+        .panel {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(25px) saturate(190%);
+            -webkit-backdrop-filter: blur(25px) saturate(190%);
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            border-radius: 24px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+        }
+
+        /* Mempersempit panel playlist manager agar layout tetap seimbang */
+        .panel.manager {
+            flex: 0.7;
+        }
+
+        h2 { 
+            font-size: 20px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.9);
+            margin-top: 0;
+            margin-bottom: 20px;
+            letter-spacing: -0.5px;
+        }
+        
+        .search-box { display: flex; gap: 12px; margin-bottom: 20px; }
+        
+        input {
+            flex: 1; 
+            padding: 14px 18px; 
+            border-radius: 14px; 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.3); 
+            color: white; 
+            font-size: 15px;
+            outline: none;
+        }
+        
+        .btn-ios {
+            background: rgba(255, 255, 255, 0.9); 
+            color: #000000; 
+            border: none; 
+            padding: 12px 20px;
+            border-radius: 14px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        .btn-ios:hover { 
+            background: #ffffff;
+            transform: scale(1.02);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            margin-bottom: 15px;
+        }
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .list-container { 
+            flex: 1; 
+            overflow-y: auto; 
+        }
+        .list-container::-webkit-scrollbar { width: 6px; }
+        .list-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        
+        .item-lagu {
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between;
+            padding: 12px; 
+            margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+        }
+        .item-lagu:hover { 
+            background: rgba(255, 255, 255, 0.07);
+        }
+        
+        .info-meta { display: flex; align-items: center; gap: 14px; }
+        .info-meta img { width: 48px; height: 48px; border-radius: 12px; object-fit: cover; }
+        .judul-txt { font-weight: 600; font-size: 15px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .artis-txt { font-size: 12px; color: rgba(255, 255, 255, 0.6); }
+        
+        .btn-add {
+            background: rgba(255, 255, 255, 0.1); 
+            color: #ffffff; 
+            border: 1px solid rgba(255, 255, 255, 0.15); 
+            padding: 8px 16px;
+            border-radius: 18px; 
+            cursor: pointer; 
+            font-size: 12px; 
+            font-weight: 600;
+        }
+        .btn-add:hover { background: #ffffff; color: #000000; }
+        .btn-delete { background: rgba(235, 94, 85, 0.2); color: #eb5e55; border: 1px solid rgba(235, 94, 85, 0.3); }
+        .btn-delete:hover { background: #eb5e55; color: white; }
+
+        #daftar-playlist .item-lagu { cursor: pointer; }
+        #daftar-playlist .item-lagu.active { 
+            background: rgba(255, 255, 255, 0.15); 
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .controls-wrapper {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+        .status-info { 
+            font-size: 14px; 
+            color: rgba(255, 255, 255, 0.7); 
+            font-weight: 500;
+        }
+        .controls { display: flex; justify-content: center; align-items: center; gap: 20px; }
+        
+        .btn-control {
+            background: rgba(255, 255, 255, 0.1); 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white; border-radius: 50%;
+            width: 46px; height: 46px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+        }
+        .btn-control:hover { background: rgba(255, 255, 255, 0.2); }
+        .btn-control.playing { background: #ffffff; color: #000000; width: 54px; height: 54px; font-size: 20px; }
+        
+        #youtube-player { display: none; }
+    </style>
+</head>
+<body>
+
+    <h1>fckoff spotfy</h1>
+
+    <div class="app-container">
+        <div class="panel">
+            <h2>Search Tracks</h2>
+            <div class="search-box">
+                <input type="text" id="input-nama" placeholder="Type artist or song name...">
+                <button class="btn-ios" onclick="cariDiYouTube()">Search</button>
+            </div>
+            <div class="list-container" id="hasil-pencarian"></div>
+        </div>
+
+        <div class="panel">
+            <h2>Queued</h2>
+            <button class="btn-ios btn-secondary" onclick="simpanKeKoleksi()">Save Current Playlist</button>
+            <div class="list-container" id="daftar-playlist"></div>
+            
+            <div class="controls-wrapper">
+                <div class="status-info" id="lagu-putar-txt">No track playing</div>
+                <div class="controls">
+                    <button class="btn-control" onclick="putarSebelumnya()">⏮</button>
+                    <button class="btn-control playing" id="btn-toggle-play" onclick="kendaliPlayPause()">⏸</button>
+                    <button class="btn-control" onclick="putarSelanjutnya()">⏭</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel manager">
+            <h2>My Saved Playlists</h2>
+            <div class="list-container" id="koleksi-playlist-saved">
+                </div>
+        </div>
+    </div>
+
+    <div id="youtube-player"></div>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script>
+        let player;
+        let playlistMandiri = [];
+        let indexAktif = -1;
+        let sedangPutar = false;
+
+        // Inisialisasi awal saat halaman dibuka
+        window.onload = function() {
+            // 1. Muat kembali antrean terakhir agar tidak hilang saat di-refresh
+            const antreanLama = localStorage.getItem('fckoff_current_queue');
+            if(antreanLama) {
+                playlistMandiri = JSON.parse(antreanLama);
+                perbaruiTampilanPlaylist();
+            }
+            // 2. Muat daftar playlist yang pernah di-save sebelumnya
+            muatKoleksiPlaylistLokal();
+        }
+
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('youtube-player', {
+                height: '0', width: '0', videoId: '',
+                events: { 'onStateChange': statusPlayerBerubah }
+            });
+        }
+
+        async function cariDiYouTube() {
+            const nama = document.getElementById('input-nama').value;
+            if(!nama) return;
+            const container = document.getElementById('hasil-pencarian');
+            container.innerHTML = "<p style='color: rgba(255,255,255,0.5); font-size: 14px;'>Searching YouTube Database...</p>";
+
+            const respon = await fetch('/api/cari-artis', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ nama })
+            });
+            const data = await respon.json();
+            
+            container.innerHTML = "";
+            data.daftarLagu.forEach(lagu => {
+                container.innerHTML += `
+                    <div class="item-lagu">
+                        <div class="info-meta">
+                            <img src="${lagu.gambar}">
+                            <div>
+                                <div class="judul-txt">${lagu.judul}</div>
+                                <div class="artis-txt">${lagu.artis} • ${lagu.durasi}</div>
+                            </div>
+                        </div>
+                        <button class="btn-add" onclick="tambahKeAntrean('${lagu.idVideo}', '${lagu.judul.replace(/'/g, "\\'")}', '${lagu.durasi}')">Add</button>
+                    </div>
+                `;
+            });
+        }
+
+        function tambahKeAntrean(id, judul, durasi) {
+            playlistMandiri.push({ id, judul, durasi });
+            simpanAntreanKeLocalStorage();
+            perbaruiTampilanPlaylist();
+            if (indexAktif === -1) {
+                putarLaguDiIndeks(0);
+            }
+        }
+
+        function perbaruiTampilanPlaylist() {
+            const wadah = document.getElementById('daftar-playlist');
+            wadah.innerHTML = "";
+            playlistMandiri.forEach((lagu, index) => {
+                const isActive = index === indexAktif ? 'active' : '';
+                wadah.innerHTML += `
+                    <div class="item-lagu ${isActive}">
+                        <div style="display:flex; align-items:center; gap:10px; flex:1;" onclick="putarLaguDiIndeks(${index})">
+                            <div class="judul-txt">${index + 1}. ${lagu.judul}</div>
+                        </div>
+                        <button class="btn-add btn-delete" onclick="hapusDariAntrean(event, ${index})">X</button>
+                    </div>
+                `;
+            });
+        }
+
+        function hapusDariAntrean(event, index) {
+            event.stopPropagation(); // Mencegah lagu terputar tidak sengaja saat tombol X ditekan
+            playlistMandiri.splice(index, 1);
+            simpanAntreanKeLocalStorage();
+            if(index === indexAktif) {
+                player.stopVideo();
+                indexAktif = -1;
+                document.getElementById('lagu-putar-txt').innerText = "No track playing";
+            }
+            perbaruiTampilanPlaylist();
+        }
+
+        function simpanAntreanKeLocalStorage() {
+            localStorage.setItem('fckoff_current_queue', JSON.stringify(playlistMandiri));
+        }
+
+        function putarLaguDiIndeks(index) {
+            if (index < 0 || index >= playlistMandiri.length) return;
+            indexAktif = index;
+            player.loadVideoById(playlistMandiri[indexAktif].id);
+            document.getElementById('lagu-putar-txt').innerText = `🎵 Playing: ${playlistMandiri[indexAktif].judul}`;
+            document.getElementById('btn-toggle-play').innerText = "⏸";
+            sedangPutar = true;
+            perbaruiTampilanPlaylist();
+        }
+
+        function kendaliPlayPause() {
+            if (indexAktif === -1 && playlistMandiri.length > 0) {
+                putarLaguDiIndeks(0);
+                return;
+            }
+            if (indexAktif === -1) return;
+            if (sedangPutar) {
+                player.pauseVideo();
+                document.getElementById('btn-toggle-play').innerText = "▶";
+                sedangPutar = false;
+            } else {
+                player.playVideo();
+                document.getElementById('btn-toggle-play').innerText = "⏸";
+                sedangPutar = true;
+            }
+        }
+
+        function putarSelanjutnya() {
+            if (indexAktif + 1 < playlistMandiri.length) {
+                putarLaguDiIndeks(indexAktif + 1);
+            }
+        }
+
+        function putarSebelumnya() {
+            if (indexAktif - 1 >= 0) {
+                putarLaguDiIndeks(indexAktif - 1);
+            }
+        }
+
+        function statusPlayerBerubah(event) {
+            if (event.data === YT.PlayerState.ENDED) {
+                putarSelanjutnya();
+            }
+        }
+
+        /* 💾 KELOMPOK FITUR SAVE PLAYLIST (SPOTIFY STYLE) */
+        function simpanKeKoleksi() {
+            if(playlistMandiri.length === 0) {
+                alert("Your current Liquid Playlist is empty! Search and add some tracks first.");
+                return;
+            }
+            const namaPlaylist = prompt("Enter a name for your custom playlist:");
+            if(!namaPlaylist) return;
+
+            let koleksiLama = localStorage.getItem('fckoff_saved_playlists');
+            koleksiLama = koleksiLama ? JSON.parse(koleksiLama) : {};
+
+            koleksiLama[namaPlaylist] = [...playlistMandiri];
+            localStorage.setItem('fckoff_saved_playlists', JSON.stringify(koleksiLama));
+            
+            muatKoleksiPlaylistLokal();
+        }
+
+        function muatKoleksiPlaylistLokal() {
+            const wadahKoleksi = document.getElementById('koleksi-playlist-saved');
+            wadahKoleksi.innerHTML = "";
+            
+            let koleksi = localStorage.getItem('fckoff_saved_playlists');
+            if(!koleksi || koleksi === "{}") {
+                wadahKoleksi.innerHTML = "<p style='color: rgba(255,255,255,0.4); font-size:13px;'>No saved playlist yet.</p>";
+                return;
+            }
+            
+            koleksi = JSON.parse(koleksi);
+            Object.keys(koleksi).forEach(namaKey => {
+                const totalTracks = koleksi[namaKey].length;
+                wadahKoleksi.innerHTML += `
+                    <div class="item-lagu">
+                        <div style="flex:1; cursor:pointer;" onclick="loadPlaylistMasukAntrean('${namaKey}')">
+                            <div style="font-weight:600;">📁 ${namaKey}</div>
+                            <div style="font-size:11px; color:rgba(255,255,255,0.5);">${totalTracks} tracks saved</div>
+                        </div>
+                        <button class="btn-add btn-delete" style="padding: 6px 12px;" onclick="hapusPlaylistPermanen('${namaKey}')">Del</button>
+                    </div>
+                `;
+            });
+        }
+
+        function loadPlaylistMasukAntrean(namaKey) {
+            let koleksi = JSON.parse(localStorage.getItem('fckoff_saved_playlists'));
+            if(koleksi && koleksi[namaKey]) {
+                playlistMandiri = [...koleksi[namaKey]];
+                simpanAntreanKeLocalStorage();
+                indexAktif = -1;
+                perbaruiTampilanPlaylist();
+                putarLaguDiIndeks(0);
+            }
+        }
+
+        function hapusPlaylistPermanen(namaKey) {
+            if(confirm(`Are you sure you want to delete "${namaKey}" permanently?`)) {
+                let koleksi = JSON.parse(localStorage.getItem('fckoff_saved_playlists'));
+                delete koleksi[namaKey];
+                localStorage.setItem('fckoff_saved_playlists', JSON.stringify(koleksi));
+                muatKoleksiPlaylistLokal();
+            }
+        }
+    </script>
+</body>
+</html>
